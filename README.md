@@ -1,72 +1,80 @@
-# FAULT DETECTION OF INDUCTION MOTOR USING MACHINE LEARNING
+Induction Motor Fault Detection using Machine Learning
+MATLAB ML
 
-This project is about using machine learning in MATLAB to detect faults in an induction motor.
-It helps in detecting faults in induction motors before they break down like broken rotor bars, worn bearings, or winding issues by training machine learning model on dataset to understand what's going inside motor and to take necessary steps for its predictive maintenance.
+A MATLAB signal processing and machine learning pipeline that detects three of the most common induction motor faults, namely bearing faults, stator winding faults, and broken rotor bars, from vibration and current signals, and classifies each into its specific fault type.
 
-**Getting the Data Ready:**
-Unzip experimental recordings from induction motor into folders.
-Then we use File Ensemble Datastore, its a Matlab way of handling huge collection of related datafiles. It not only stores data but keep record of which file belong to which fault condition. This makes it easy to process and compare signals.
+This repository accompanies the paper "Detection of Faults in an Induction Motor using Signal Processing and Machine Learning" (project-report.pdf), and includes a short demo video (Project demonstration by Ahmed Razi.mp4).
 
-**Signal Processing and Envelope Analysis:**
-Next up, we clean and process the signals.
+Each fault category lives in its own folder with its own README covering that category's data and code in detail. This README is the entry point: what the project does, how the three parts relate, and where to look next.
 
-To detect motor faults, we need to focus on the right frequency range, so we apply a band-pass filter between 900 Hz and 1300 Hz.
-This range tends to capture most fault-related energy in the signal.
+Table of Contents
+Overview
+Repository Structure
+Fault Categories
+Common Pipeline
+Results Summary
+Requirements
+How to Run
+Project Report and Demo
+Notes for Reproducing on Your Own Machine
+Team
+References
+Overview
+Over 90% of industrial electric drives are induction motors, and unplanned failures are costly. This project builds a predictive maintenance pipeline. It processes raw vibration and current signals, extracts diagnostic features with MATLAB's Diagnostic Feature Designer, and trains classifiers (evaluated in MATLAB's Classification Learner) to separate healthy operation from specific fault types, for three different fault mechanisms.
 
-After that, we calculate something called an envelope. It's a smoothed version of the signal that reveals hidden frequency patterns.
+Repository Structure
+.
+├── bearing-fault-detection/     Inner/outer race and roller element bearing faults (KNN, CSV features)
+├── rotor-fault-detection/       Broken rotor bar detection (Diagnostic Feature Designer pipeline)
+├── winding-fault-detection/     Stator inter turn short circuit detection
+├── project-report.pdf           Full write up: datasets, methodology, results per fault type
+├── Project demonstration by Ahmed Razi.mp4   Short video walkthrough
+└── README.md                    You are here
+Each subfolder has its own Readme.md describing its specific dataset, scripts and usage. See Fault Categories below for a summary and links.
 
-We also use the Wavelet Toolbox to create beautiful scalograms, which show how the signal’s energy changes over time and frequency.
-These plots make it easy to see fault patterns visually.
+Fault Categories
+1. Bearing Faults bearing-fault-detection/
+Detects inner race, outer race, and roller element faults from vibration data (based on the IMS bearing run to failure dataset: 4 bearings, 2000 RPM, 20 kHz sampling, 1 second snapshots). Features are extracted per file, merged into a single table, and classified with KNN. See bearing-fault-detection/Readme.md for the exact data import and prediction commands.
 
-**Feature Extraction:**
-When the signals are ready, it’s time to let MATLAB’s Diagnostic Feature Designer App to:
+2. Broken Rotor Bar Faults rotor-fault-detection/
+Detects 0 to 4 broken rotor bars from three phase current and radial vibration signals, across multiple load levels. Uses a fileEnsembleDatastore to organize raw experiment files, then a band pass filter (900 to 1300 Hz) and envelope analysis feed the Diagnostic Feature Designer pipeline (diagnosticFeatures.m) before classification. See rotor-fault-detection/Readme.md.
 
-Import the preprocessed signals.
-Visualize them in both time and frequency domains.
-Use the Auto Features button. MATLAB automatically extracts dozens of useful features.
-Rank them using a One-way ANOVA test, which helps find which features are best at separating fault conditions.
-We end up with a ranked list of features usually the top 10 are more than enough for classification.
+3. Stator Winding Faults winding-fault-detection/
+Detects inter turn short circuit faults at different severity and load levels from three phase current signals (2240 recorded conditions across 6 defect classes and 3 load levels). See winding-fault-detection/Readme.md.
 
-**Training the Machine Learning Model:**
-Once the features are ready,export them straight into the Classification Learner App.
+Common Pipeline
+All three fault categories follow the same general workflow:
 
-Inside that app:
+Data organization: raw recordings are grouped (via fileEnsembleDatastore or merged tables) and tagged with their health condition.
+Signal processing: a band pass filter isolates the fault relevant frequency band, followed by envelope analysis; the Wavelet Toolbox is used for scalogram visualization.
+Feature extraction: MATLAB's Diagnostic Feature Designer app auto generates candidate features and ranks them with one way ANOVA.
+Model training: top features are exported to the Classification Learner app, where multiple models (KNN, decision trees, SVM, ensembles) are trained with cross validation and compared.
+Evaluation: the best model is assessed with a confusion matrix on held out test data.
+Results Summary
+(from project-report.pdf; see that document for full confusion matrices and discussion)
 
-Choose a 5-fold cross-validation setup to make sure our results are solid.
-Try out multiple models i.e decision trees, SVMs, ensemble models, etc.
-Click Train All, sit back, and let MATLAB test everything.
+Fault Category	Best Model	Reported Accuracy
+Bearing (inner/outer race, roller element)	KNN	about 95.2 to 95.7%
+Stator winding (inter turn short circuit)	Decision tree / KNN	about 95%
+Broken rotor bar	Decision tree	about 96%
+Note: figures above are quoted from the project report per fault category. If you rerun the pipelines, use your own confusion matrix output as the source of truth, and update this table (and each subfolder's README) accordingly.
 
-The app shows each model’s accuracy, so we just pick the one that performs best.
-In our case, the KNN reached about 97.5% accuracy
-
-**Checking Model Performance:**
-We use a Confusion Matrix to understand how the model did.The diagonal cells show correct predictions e.g., all healthy cases identified correctly.
-The off-diagonal ones show mistakes.
-
-Here’s what got noticed:
-
-All healthy cases were predicted correctly.
-A few minor mix-ups happened between similar fault conditions.
-Overall accuracy: 97.5%, which is excellent!
-
-**Requirements:**
-MATLAB R2023a (or newer)
-
-These toolboxes:
-
+Requirements
+MATLAB R2023a or newer
 Signal Processing Toolbox
 Wavelet Toolbox
 Statistics and Machine Learning Toolbox
 Predictive Maintenance Toolbox
+How to Run
+Each fault category is run independently. Open the relevant subfolder's README first, since the exact scripts and file names differ per category:
 
-This project was a great mix of signal processing, machine learning, and practical engineering.
-It shows how you can take sensor data, process it intelligently, and teach a computer to recognize motor faults automatically.
-
-**Author:**
-Name: Ahmed Razi Ullah
-Email:ahmedrazi762@gmail.com
-Linked In: www.linkedin.com/in/ahmed-razi-ullah-5b6b0a243
-
-**Insights:**
-This project was a great mix of signal processing, machine learning, and practical engineering.
-It shows how you can take sensor data, process it intelligently, and teach a computer to recognize motor faults automatically.
+Bearing: open bearing-fault-detection/Readme.md, import the listed CSVs, merge them, and run through Classification Learner as described, or load KNN_Model_Session.mat directly to reuse the already trained model.
+Rotor: open rotor-fault-detection/Readme.md and run razi.m to build the ensemble datastore, then diagnosticFeatures.m for feature extraction.
+Winding: open winding-fault-detection/Readme.md. trainedmodel.mat and testdata.mat let you reproduce predictions without retraining, or use test.m directly.
+Project Report and Demo
+Full write up: project-report.pdf, covering dataset descriptions, experimental setup, feature extraction details and per fault conclusions for all three categories.
+Demo video: Project demonstration by Ahmed Razi.mp4, a short walkthrough of the project in action.
+Notes for Reproducing on Your Own Machine
+Some scripts (for example Files_Import.m, the sub README code snippets) use hardcoded Windows paths such as D:\EM_Project\.... Update these to your own dataset location before running.
+The pretrained models (KNN_Model_Session.mat, trainedmodel.mat) let you skip straight to prediction without retraining, if you just want to see the pipeline work end to end.
+Large raw datasets (for example the IMS bearing test to failure files under bearing-fault-detection/test-data/) are experiment recordings referenced by the scripts; see that folder's own README for what each file represents.
